@@ -16,7 +16,7 @@ See the examples:
 
 # TODO List for Demonstrator 10-11.11.2021
 - [x] RSS Longitudinal Safety
-- [] RSS Lateral Safety
-- [] Traffic Rule Left-Turn Right
-- [] Comfort Longitudinal Jerk
-- [] Comfort Lateral Jerk
+- [ ] RSS Lateral Safety
+- [ ] Traffic Rule Left-Turn Right
+- [ ] Comfort Longitudinal Jerk
+- [ ] Comfort Lateral Jerk
