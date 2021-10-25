@@ -13,3 +13,10 @@ I will try to keep a minimal set of examples to show how to use this library.
 
 See the examples:
 - `examples/example_lon_safety.py` implements a simple offline monitor for RSS1 (*Longitudinal Safety*)
+
+# TODO List for Demonstrator 10-11.11.2021
+- [x] RSS Longitudinal Safety
+- [] RSS Lateral Safety
+- [] Traffic Rule Left-Turn Right
+- [] Comfort Longitudinal Jerk
+- [] Comfort Lateral Jerk
