@@ -53,7 +53,6 @@ class RSSLongitudinalSafetyRule(STLRule):
         P_lon = f"({P_lon_1} and {P_lon_2})"
         # resulting specification
         phi_lon_resp = f"always (({S_lon_bf} and (next (not {S_lon_bf}))) -> (next {P_lon}))"
-        phi_lon_resp = f"(({S_lon_bf} and (next (not {S_lon_bf}))) -> (next {P_lon}))"
         return phi_lon_resp
 
     def _compute_dynamic_safe_dist(self, data: Dict[str, np.ndarray]) -> np.ndarray:
