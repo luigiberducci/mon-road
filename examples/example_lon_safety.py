@@ -23,6 +23,7 @@ robustness = [r for t, r in monitor_trace(stl_spec, vars, types, signals)]
 
 # plot
 import matplotlib.pyplot as plt
+
 plt.title("Monitoring RSS Longitudinal Safety")
 plt.xlabel("time steps")
 plt.ylabel("value")

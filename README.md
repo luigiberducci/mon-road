@@ -1,7 +1,5 @@
 # Mon-Road
-Library for monitoring of traffic metrics using STL.
-
-This library has been developed in the context of the FFG Project ADEX.
+Library for monitoring of traffic metrics using STL, developed in the context of the FFG Project ADEX.
 
 # Installation
 Run the following command to install the dependencies 
