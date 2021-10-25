@@ -1,0 +1,6 @@
+a_lon_minbr: 4.0    # m/s2
+a_lon_maxbr: 10.0   # m/s2
+a_lon_maxacc: 5.5   # m/s2
+rho: 1.0    # s
+rho_dt: 1   # int
+max_steps: 1000   # over-estimation of trace len
