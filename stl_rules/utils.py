@@ -10,7 +10,8 @@ def monitor_trace(stl_spec: str, vars: List[str], types: List[str], trace: Dict[
     spec.spec = stl_spec
     try:
         spec.parse()
-    except rtamt.STLParseException:
+    except rtamt.STLParseException as err:
+        print(f"[Error] STL Spec cannot be parsed by rtamt:\n{err}")
         return
     # preprocess format, evaluate, post process
     robustness_trace = spec.evaluate(trace)

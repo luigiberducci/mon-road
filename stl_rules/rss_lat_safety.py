@@ -34,7 +34,7 @@ class RSSLateralSafetyRule(STLRule):
             `rho`: reaction time in seconds
             `rho_dt`: reaction time in number of steps (note: we use `next` operator, we need discrete-time stl)
         """
-        required_parameters = ["a_lat_maxacc", "rho_dt", "max_steps", "mu"]
+        required_parameters = ["a_lat_maxacc", "a_lat_minbr", "rho", "rho_dt", "max_steps", "mu"]
         assert all([p in rss_params for p in required_parameters])
         self._p = {p: rss_params[p] for p in required_parameters}
 
@@ -56,8 +56,8 @@ class RSSLateralSafetyRule(STLRule):
         psi_1 = f"({A_lat_l_maxacc} and {A_lat_r_maxacc})"
         P_lat_0_r = f"(not( not({S_lat_lr}) until[0:{self._p['rho_dt']}] not({S_lat_lr} or {psi_1})))"
         # P_lat1_r_inf = Psi2 and Psi3 = ((S or V_l_stop) R^{ns}_[rho,inf] A_l_minbr) and ((S or V_r_stop) R^{ns}_[rho,inf] A_r_minbr)
-        S_or_Vlstop = "({S_lat_lr} or {V_lat_l_stop})"
-        S_or_Vrstop = "({S_lat_lr} or {V_lat_r_stop})"
+        S_or_Vlstop = f"({S_lat_lr} or {V_lat_l_stop})"
+        S_or_Vrstop = f"({S_lat_lr} or {V_lat_r_stop})"
         Until_rho_inf = f"until[{self._p['rho_dt']}:{self._p['max_steps']}]"
         psi_2 = f"(not((not {S_or_Vlstop}) {Until_rho_inf} (not ({S_or_Vlstop} or {A_lat_l_minbr}))))"
         psi_3 = f"(not((not {S_or_Vrstop}) {Until_rho_inf} (not ({S_or_Vrstop} or {A_lat_r_minbr}))))"
@@ -90,8 +90,7 @@ class RSSLateralSafetyRule(STLRule):
 
     def generate_signals(self, data: Dict[str, np.ndarray]) -> Dict[str, List]:
         # check input
-        obs_signals = ["v_lat_l", "v_lat_r", "a_lat_l", "a_lat_r", "d_lat_lr",
-                       "v_lon_b", "v_lon_f", "v_mulat_l", "v_mulat_r"]
+        obs_signals = ["v_lat_l", "v_lat_r", "a_lat_l", "a_lat_r", "d_lat_lr", "v_mulat_l", "v_mulat_r"]
         assert all([s in data for s in obs_signals]), f"missing in signals ({obs_signals} not in {data.keys()})"
         # generate output signals from input signals
         out_signals = {}

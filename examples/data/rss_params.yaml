@@ -1,6 +1,20 @@
+#
+# ******** DO NOT USE THIS FILE FOR MONITORING ********
+# These parameters are used only for running examples,
+# they match the synthetic data used as demonstrations.
+#
+# longitudinal accelerations
 a_lon_minbr: 4.0    # m/s2
 a_lon_maxbr: 10.0   # m/s2
 a_lon_maxacc: 5.5   # m/s2
+# lateral accelerations
+a_lat_maxacc: 3.0   # m/s2
+a_lat_minbr: 3.0   # m/s2
+# reaction time
 rho: 1.0    # s
-rho_dt: 1   # int
-max_steps: 1000   # over-estimation of trace len
+rho_dt: 1   # int, note: it must match the discretization w.r.t. simulation step
+# lateral distances
+mu: 0.4   # m
+# others
+# max_steps := over-estimation of trace len for open intervals [rho,+inf] ~ [rho, max_steps]
+max_steps: 1000   # int

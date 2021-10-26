@@ -10,16 +10,13 @@ with open("data/rss_params.yaml", 'r') as stream:
 trace = pd.read_csv("data/example1.csv")
 
 # create rss rule
-rss_lon_safety = RSSLongitudinalSafetyRule(rss_params=rss_params)
-vars = rss_lon_safety.variables
-types = rss_lon_safety.types
-stl_spec = rss_lon_safety.spec
+rss1 = RSSLongitudinalSafetyRule(rss_params=rss_params)
 
 # process data to produce monitorable signals
-signals = rss_lon_safety.generate_signals(trace)
+signals = rss1.generate_signals(trace)
 
 # compute robustness
-robustness = [r for t, r in monitor_trace(stl_spec, vars, types, signals)]
+robustness = [r for t, r in monitor_trace(rss1.spec, rss1.variables, rss1.types, signals)]
 
 # plot
 import matplotlib.pyplot as plt
