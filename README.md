@@ -15,12 +15,12 @@ Library for monitoring of traffic metrics using STL, developed in the context of
   - [ ] Implementation of a minimal example
   - [ ] Test integration with simulated data
 - [ ] Comfort Longitudinal Jerk
-  - [ ] Implementation of STL monitoring
-  - [ ] Implementation of a minimal example
+  - [x] Implementation of STL monitoring
+  - [x] Implementation of a minimal example
   - [ ] Test integration with simulated data
 - [ ] Comfort Lateral Jerk
-  - [ ] Implementation of STL monitoring
-  - [ ] Implementation of a minimal example
+  - [x] Implementation of STL monitoring
+  - [x] Implementation of a minimal example
   - [ ] Test integration with simulated data
 
 # Installation
