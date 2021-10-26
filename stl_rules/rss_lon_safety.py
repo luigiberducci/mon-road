@@ -9,7 +9,8 @@ class RSSLongitudinalSafetyRule(STLRule):
     """
     This rule implement the Longitudinal Safety Specification.
 
-    It is based on formalization reported in Lemma 3.1 of [1: Hekmatnejad et al., MEMOCODE 2019].
+    It is based on formalization reported in Lemma 3.1 of [1: Hekmatnejad et al., MEMOCODE 2019]
+    and the RSS model defined in [2: Shalev-Shwartz et al., 2018].
     Naming conventions: the variables will follow the same naming of [1], as close as possible.
 
     *Rewriting*: some operators have been rewritten to match the rtamt spec language (e.g. non-strict release)
@@ -55,7 +56,7 @@ class RSSLongitudinalSafetyRule(STLRule):
         phi_lon_resp = f"always (({S_lon_bf} and (next (not {S_lon_bf}))) -> (next {P_lon}))"
         return phi_lon_resp
 
-    def _compute_dynamic_safe_dist(self, data: Dict[str, np.ndarray]) -> np.ndarray:
+    def _compute_dynamic_safe_long_dist(self, data: Dict[str, np.ndarray]) -> np.ndarray:
         d_b_prebr = data['v_lon_b'] * self._p['rho'] + 1 / 2 * self._p['a_lon_maxacc'] * self._p['rho'] ** 2
         d_b_brake_num = ((data['v_lon_b'] + self._p['rho'] * self._p['a_lon_maxacc']) ** 2)
         d_b_brake_den = 2 * self._p['a_lon_minbr']
@@ -75,7 +76,7 @@ class RSSLongitudinalSafetyRule(STLRule):
         out_signals["a_lon_b"] = data["a_lon_b"]
         out_signals["a_lon_f"] = data["a_lon_f"]
         out_signals["d_lon_bf"] = data["d_lon_bf"]
-        out_signals["d_lon_min"] = self._compute_dynamic_safe_dist(data)
+        out_signals["d_lon_min"] = self._compute_dynamic_safe_long_dist(data)
         out_signals = {k: list(v) for k, v in out_signals.items()}
         # check output
         assert all([s in out_signals for s in
