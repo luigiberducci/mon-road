@@ -10,8 +10,12 @@ a_lon_maxacc: 5.5   # m/s2
 # lateral accelerations
 a_lat_maxacc: 3.0   # m/s2
 a_lat_minbr: 3.0   # m/s2
+# comfort jerk
+j_lon_max: 0.5
+j_lat_max: 0.5
 # reaction time
 rho: 1.0    # s
+sim_dt: 1.0 # s
 rho_dt: 1   # int, note: it must match the discretization w.r.t. simulation step
 # lateral distances
 mu: 0.4   # m
