@@ -36,4 +36,5 @@ I will try to keep a minimal set of examples to show how to use this library.
 See the examples:
 - `examples/example_longitudinal_safety.py` implements a simple offline monitor for RSS1 (*Longitudinal Safety*)
 - `examples/example_lateral_safety.py` implements a simple offline monitor for RSS2 (*Lateral Safety*)
+- `examples/example_traffic_rule_left_turn.py` implements a simple offline monitor for the custom Traffic Rule (*Safe Left-Turn*)
 
