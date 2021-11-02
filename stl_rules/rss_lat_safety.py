@@ -33,6 +33,8 @@ class RSSLateralSafetyRule(STLRule):
             `a_lon_minacc`, `a_lon_maxacc` : min, max longitudinal acceleration
             `rho`: reaction time in seconds
             `rho_dt`: reaction time in number of steps (note: we use `next` operator, we need discrete-time stl)
+            `max_steps`: overestimation of the episode length, used to monitor open intervals
+            `mu`: used to compute the mu-lateral velocity, kind of min dist among vehicles we want to enforce (ndr)
         """
         required_parameters = ["a_lat_maxacc", "a_lat_minbr", "rho", "rho_dt", "max_steps", "mu"]
         assert all([p in rss_params for p in required_parameters])
@@ -90,7 +92,7 @@ class RSSLateralSafetyRule(STLRule):
 
     def generate_signals(self, data: Dict[str, np.ndarray]) -> Dict[str, List]:
         # check input
-        obs_signals = ["v_lat_l", "v_lat_r", "a_lat_l", "a_lat_r", "d_lat_lr", "v_mulat_l", "v_mulat_r"]
+        obs_signals = ["time", "v_lat_l", "v_lat_r", "a_lat_l", "a_lat_r", "d_lat_lr", "v_mulat_l", "v_mulat_r"]
         assert all([s in data for s in obs_signals]), f"missing in signals ({obs_signals} not in {data.keys()})"
         # generate output signals from input signals
         out_signals = {}

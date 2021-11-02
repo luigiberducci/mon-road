@@ -11,7 +11,7 @@ Library for monitoring of traffic metrics using STL, developed in the context of
   - [x] Implementation of a minimal example
   - [ ] Test integration with simulated data
 - [ ] Traffic Rule Left-Turn Right
-  - [ ] Implementation of STL monitoring
+  - [x] Implementation of STL monitoring
   - [ ] Implementation of a minimal example
   - [ ] Test integration with simulated data
 - [ ] Comfort Longitudinal Jerk

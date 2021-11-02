@@ -33,6 +33,7 @@ class RSSLongitudinalSafetyRule(STLRule):
             `a_lon_minacc`, `a_lon_maxacc` : min, max longitudinal acceleration
             `rho`: reaction time in seconds
             `rho_dt`: reaction time in number of steps (note: we use `next` operator, we need discrete-time stl)
+            `max_steps`: overestimation of the episode length, used to monitor open intervals
         """
         required_parameters = ["a_lon_minbr", "a_lon_maxbr", "a_lon_maxacc", "rho", "rho_dt", "max_steps"]
         assert all([p in rss_params for p in required_parameters])
@@ -68,7 +69,7 @@ class RSSLongitudinalSafetyRule(STLRule):
 
     def generate_signals(self, data: Dict[str, np.ndarray]) -> Dict[str, List]:
         # check input
-        obs_signals = ["a_lon_b", "a_lon_f", "d_lon_bf", "v_lon_b", "v_lon_f"]
+        obs_signals = ["time", "a_lon_b", "a_lon_f", "d_lon_bf", "v_lon_b", "v_lon_f"]
         assert all([s in data for s in obs_signals]), f"missing in signals ({obs_signals} not in {data.keys()})"
         # generate output signals from input signals
         out_signals = {}
