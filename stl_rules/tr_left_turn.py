@@ -70,7 +70,7 @@ class TrafficRuleLeftTurn(STLRule):
         release_cond = f"({V_lon_e_stop} or {C_react_or_crossed})"
         # specification
         # note: non-strict release operator is written using not and until
-        S = f"(({E_canbrake} and not(next({E_canbrake}))) and ({C_canbrake}) AND ({E_not_injunc}))"
+        S = f"(({E_canbrake} and not(next({E_canbrake}))) and ({C_canbrake}) and ({E_not_injunc}))"
         P_react = f"(not(not({release_cond}) until[0:{self._p['rho_dt']}] not({release_cond} or {A_lon_e_maxacc})))"
         P_brake = f"(not(not({release_cond}) until[0:{self._p['rho_dt']}] not({release_cond} or {A_lon_e_minbr})))"
         P_leftturn = f"({P_react} and {P_brake})"
