@@ -35,14 +35,14 @@ class RSSLongitudinalSafetyRule(STLRule):
             `rho_dt`: reaction time in number of steps (note: we use `next` operator, we need discrete-time stl)
             `max_steps`: overestimation of the episode length, used to monitor open intervals
         """
-        required_parameters = ["a_lon_minbr", "a_lon_maxbr", "a_lon_maxacc", "rho", "rho_dt", "max_steps"]
+        required_parameters = ["a_lon_minbr", "a_lon_maxbr", "a_lon_maxacc", "rho", "rho_dt", "sim_dt", "max_steps"]
         assert all([p in rss_params for p in required_parameters])
         self._p = {p: rss_params[p] for p in required_parameters}
 
     @property
     def spec(self):
         # predicates
-        S_lon_bf = "(d_lon_bf > d_lon_min)"
+        S_lon_bf = "(d_lon_bf >= d_lon_min)"
         A_lon_b_maxacc = f"(a_lon_b <= {self._p['a_lon_maxacc']})"
         A_lon_b_minbr = f"(a_lon_b <= -{self._p['a_lon_minbr']})"
         A_lon_f_maxbr = f"(a_lon_f >= -{self._p['a_lon_maxbr']})"
@@ -50,14 +50,33 @@ class RSSLongitudinalSafetyRule(STLRule):
         # note: non-strict release operator is written using not and until
         psi1 = f"({A_lon_b_maxacc} and {A_lon_f_maxbr})"
         psi2 = f"({A_lon_b_minbr} and {A_lon_f_maxbr})"
-        P_lon_1 = f"(not(not({S_lon_bf}) until[0:{self._p['rho_dt']}] not({S_lon_bf} or {psi1})))"
-        P_lon_2 = f"(not(not({S_lon_bf}) until[{self._p['rho_dt']}:{self._p['max_steps']}] not({S_lon_bf} or {psi2})))"
+        P_lon_1 = f"(not(not({S_lon_bf}) until[0:{self._p['rho_dt']}] (not({S_lon_bf} or {psi1}))))"
+        P_lon_2 = f"(not(not({S_lon_bf}) until[{self._p['rho_dt']}:{self._p['max_steps']}] (not({S_lon_bf} or {psi2}))))"
         P_lon = f"({P_lon_1} and {P_lon_2})"
         # resulting specification
         phi_lon_resp = f"always (({S_lon_bf} and (next (not {S_lon_bf}))) -> (next {P_lon}))"
         return phi_lon_resp
 
+    @property
+    def demo_spec(self):
+        # predicates
+        S_lon_bf = "(d_lon_bf >= d_lon_min)"
+        A_lon_b_maxacc = f"(a_lon_b <= {self._p['a_lon_maxacc']})"
+        A_lon_b_minbr = f"(a_lon_b <= -{self._p['a_lon_minbr']})"
+        A_lon_f_maxbr = f"(a_lon_f >= -{self._p['a_lon_maxbr']})"
+        # specification
+        # note: non-strict release operator is written using not and until
+        psi1 = f"({A_lon_b_maxacc} and {A_lon_f_maxbr})"
+        psi2 = f"({A_lon_b_minbr} and {A_lon_f_maxbr})"
+        P_lon_1 = f"(not(not({S_lon_bf}) until[0:{self._p['rho_dt']}] (not({S_lon_bf} or {psi1}))))"
+        P_lon_2 = f"(not(not({S_lon_bf}) until[{self._p['rho_dt']}:{self._p['max_steps']}] (not({S_lon_bf} or {psi2}))))"
+        P_lon = f"({P_lon_1} and {P_lon_2})"
+        # resulting specification
+        phi_lon_resp = f"always ((not {S_lon_bf}) -> (next {P_lon}))"
+        return phi_lon_resp
+
     def _compute_dynamic_safe_long_dist(self, data: Dict[str, np.ndarray]) -> np.ndarray:
+        assert [f in data for f in ["v_lon_b", "v_lon_f"]]
         d_b_prebr = data['v_lon_b'] * self._p['rho'] + 1 / 2 * self._p['a_lon_maxacc'] * self._p['rho'] ** 2
         d_b_brake_num = ((data['v_lon_b'] + self._p['rho'] * self._p['a_lon_maxacc']) ** 2)
         d_b_brake_den = 2 * self._p['a_lon_minbr']
@@ -79,6 +98,29 @@ class RSSLongitudinalSafetyRule(STLRule):
         out_signals["d_lon_bf"] = data["d_lon_bf"]
         out_signals["d_lon_min"] = self._compute_dynamic_safe_long_dist(data)
         out_signals = {k: list(v) for k, v in out_signals.items()}
+        # check output
+        assert all([s in out_signals for s in
+                    self.variables]), f"missing out signals ({self.variables} not in {out_signals.keys()})"
+        return out_signals
+
+    def generate_signals_for_demo(self, data: Dict[str, np.ndarray], begin: int = 5, end: int=1000) -> Dict[str, List]:
+        # check input
+        obs_signals = ["elapsed_time", "a_lon_ego", "a_lon_car", "d_lon_egocar", "v_lon_ego", "v_lon_car"]
+        assert all([s in data for s in obs_signals]), f"missing in signals ({obs_signals} not in {data.keys()})"
+        # generate output signals from input signals
+        out_signals = {}
+        out_signals["time"] = 1 + np.floor(
+            (data["elapsed_time"] - data["elapsed_time"][0]) / self._p["sim_dt"]).astype(int)[begin:end]
+        out_signals["a_lon_b"] = data["a_lon_ego"][begin:end]
+        out_signals["a_lon_f"] = data["a_lon_car"][begin:end]
+        out_signals["d_lon_bf"] = data["d_lon_egocar"][begin:end]
+        data["v_lon_b"] = data["v_lon_ego"][begin:end]
+        data["v_lon_f"] = data["v_lon_car"][begin:end]
+        out_signals["d_lon_min"] = self._compute_dynamic_safe_long_dist(data)[begin:end]
+        out_signals = {k: list(v) for k, v in out_signals.items()}
+        out_signals = {k: [lst[0]] + lst for k, lst in out_signals.items()}
+        out_signals["time"] = [t + 1 for t in out_signals["time"] if t > 0]
+        out_signals["d_lon_min"][0] = 0
         # check output
         assert all([s in out_signals for s in
                     self.variables]), f"missing out signals ({self.variables} not in {out_signals.keys()})"
