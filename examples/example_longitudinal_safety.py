@@ -11,7 +11,7 @@ with open("data/rss_params.yaml", 'r') as stream:
     rss_params = yaml.safe_load(stream)
 # trace = pd.read_csv("data/example1.csv")
 datadir = pathlib.Path("data")
-filename = "safe1_3159_3162"
+filename = "safe1_3159_3161"
 trace = pd.read_csv(datadir / f"{filename}.csv")
 
 # create rss rule

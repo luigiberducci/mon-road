@@ -72,7 +72,7 @@ class RSSLongitudinalSafetyRule(STLRule):
         P_lon_2 = f"(not(not({S_lon_bf}) until[{self._p['rho_dt']}:{self._p['max_steps']}] (not({S_lon_bf} or {psi2}))))"
         P_lon = f"({P_lon_1} and {P_lon_2})"
         # resulting specification
-        phi_lon_resp = f"always ((not {S_lon_bf}) -> (next {P_lon}))"
+        phi_lon_resp = f"((not {S_lon_bf}) -> (next {P_lon}))"
         return phi_lon_resp
 
     def _compute_dynamic_safe_long_dist(self, data: Dict[str, np.ndarray]) -> np.ndarray:
