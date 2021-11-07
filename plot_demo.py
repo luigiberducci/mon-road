@@ -48,7 +48,6 @@ with open("data/rss_params.yaml", 'r') as stream:
 
 # monitor rules
 for rule_name in rules:
-    t0 = time.time()
     # create stl-rule
     rule = stl_rules[rule_name](rss_params=rss_params)
     stl_spec = rule.spec
@@ -56,6 +55,7 @@ for rule_name in rules:
     xs, ys, labels = [], [], []
     print(f"[Info] Monitoring rule {rule_name} from files in {datadir}")
     for filepath_str in glob.glob(str(datadir / f"{rule_name}*csv")):
+        t0 = time.time()
         # read data
         filepath = pathlib.Path(filepath_str)
         trace = pd.read_csv(filepath)
