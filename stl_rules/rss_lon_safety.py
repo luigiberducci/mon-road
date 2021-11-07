@@ -75,13 +75,14 @@ class RSSLongitudinalSafetyRule(STLRule):
         phi_lon_resp = f"(next(not {S_lon_bf})) -> (next {P_lon})"
         return phi_lon_resp
 
-    def _compute_dynamic_safe_long_dist(self, data: Dict[str, np.ndarray]) -> np.ndarray:
-        assert [f in data for f in ["v_lon_b", "v_lon_f"]]
-        d_b_prebr = data['v_lon_b'] * self._p['rho'] + 1 / 2 * self._p['a_lon_maxacc'] * self._p['rho'] ** 2
-        d_b_brake_num = ((data['v_lon_b'] + self._p['rho'] * self._p['a_lon_maxacc']) ** 2)
+    def _compute_dynamic_safe_long_dist(self, data: Dict[str, np.ndarray], v_b_field: str = "v_lon_b",
+                                        v_f_field: str = "v_lon_f") -> np.ndarray:
+        assert [f in data for f in [v_b_field, v_f_field]]
+        d_b_prebr = data[v_b_field] * self._p['rho'] + 1 / 2 * self._p['a_lon_maxacc'] * self._p['rho'] ** 2
+        d_b_brake_num = ((data[v_b_field] + self._p['rho'] * self._p['a_lon_maxacc']) ** 2)
         d_b_brake_den = 2 * self._p['a_lon_minbr']
         d_b_brake = d_b_brake_num / d_b_brake_den
-        d_f_brake = (data['v_lon_f'] ** 2) / (2 * self._p['a_lon_maxbr'])
+        d_f_brake = (data[v_f_field] ** 2) / (2 * self._p['a_lon_maxbr'])
         d_diff = d_b_prebr + d_b_brake - d_f_brake
         d_lon_min = np.maximum(d_diff, np.zeros_like(d_diff))
         return d_lon_min
@@ -103,7 +104,8 @@ class RSSLongitudinalSafetyRule(STLRule):
                     self.variables]), f"missing out signals ({self.variables} not in {out_signals.keys()})"
         return out_signals
 
-    def generate_signals_for_demo(self, data: Dict[str, np.ndarray], begin: int = 5, end: int=1000) -> Dict[str, List]:
+    def generate_signals_for_demo(self, data: Dict[str, np.ndarray], begin: int = 5, end: int = 1000) -> Dict[
+        str, List]:
         # check input
         obs_signals = ["elapsed_time", "a_lon_ego", "a_lon_car", "d_lon_egocar", "v_lon_ego", "v_lon_car"]
         assert all([s in data for s in obs_signals]), f"missing in signals ({obs_signals} not in {data.keys()})"
@@ -114,9 +116,7 @@ class RSSLongitudinalSafetyRule(STLRule):
         out_signals["a_lon_b"] = data["a_lon_ego"]
         out_signals["a_lon_f"] = data["a_lon_car"]
         out_signals["d_lon_bf"] = data["d_lon_egocar"]
-        data["v_lon_b"] = data["v_lon_ego"]
-        data["v_lon_f"] = data["v_lon_car"]
-        out_signals["d_lon_min"] = self._compute_dynamic_safe_long_dist(data)
+        out_signals["d_lon_min"] = self._compute_dynamic_safe_long_dist(data, v_b_field="v_lon_ego", v_f_field="v_lon_car")
         out_signals = {k: list(v[begin:end]) for k, v in out_signals.items()}
         # check output
         assert all([s in out_signals for s in

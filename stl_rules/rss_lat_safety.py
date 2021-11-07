@@ -114,17 +114,18 @@ class RSSLateralSafetyRule(STLRule):
         phi_lat_resp = f"(next (not {S_lat_lr})) -> (next {P_lat})"
         return phi_lat_resp
 
-    def _compute_dynamic_safe_lat_dist(self, data: Dict[str, np.ndarray]) -> np.ndarray:
+    def _compute_dynamic_safe_lat_dist(self, data: Dict[str, np.ndarray], v_l_field: str="v_lat_l", v_r_field: str="v_lat_r") -> np.ndarray:
         """ Follows the Definition 3.2 in [1]"""
-        v_lat_l_rho = data["v_lat_l"] + self._p["rho"] * self._p["a_lat_maxacc"]
-        v_lat_r_rho = data["v_lat_r"] - self._p["rho"] * self._p["a_lat_maxacc"]
-        d_l_prebr = (data["v_lat_l"] + v_lat_l_rho) / 2 * self._p["rho"]
-        d_r_prebr = (data["v_lat_r"] + v_lat_r_rho) / 2 * self._p["rho"]
+        assert [f in data for f in [v_l_field, v_r_field]]
+        v_lat_l_rho = data[v_l_field] + self._p["rho"] * self._p["a_lat_maxacc"]
+        v_lat_r_rho = data[v_r_field] - self._p["rho"] * self._p["a_lat_maxacc"]
+        d_l_prebr = (data[v_l_field] + v_lat_l_rho) / 2 * self._p["rho"]
+        d_r_prebr = (data[v_r_field] + v_lat_r_rho) / 2 * self._p["rho"]
         d_l_brake = (v_lat_l_rho ** 2) / (2 * self._p["a_lat_minbr"])
         d_r_brake = (v_lat_r_rho ** 2) / (2 * self._p["a_lat_minbr"])
         d_diff = d_l_prebr + d_l_brake - (d_r_prebr - d_r_brake)
         d_min_lat = self._p["mu"] + np.maximum(d_diff, np.zeros_like(d_diff))
-        assert d_min_lat.shape == data["v_lat_l"].shape
+        assert d_min_lat.shape == data[v_l_field].shape
         return d_min_lat
 
     def generate_signals_for_demo(self, data: Dict[str, np.ndarray], begin: int = 5, end: int = 10000) -> Dict[
@@ -139,9 +140,7 @@ class RSSLateralSafetyRule(STLRule):
         out_signals["time"] = np.floor(
             (data["elapsed_time"] - data["elapsed_time"][0]) / self._p["sim_dt"]).astype(int)
         out_signals["d_lat_lr"] = data["d_lat_egocar"]
-        data["v_lat_l"] = data["v_lat_car"]  # used to compute safe dist
-        data["v_lat_r"] = data["v_lat_ego"]
-        out_signals["d_lat_min"] = self._compute_dynamic_safe_lat_dist(data)
+        out_signals["d_lat_min"] = self._compute_dynamic_safe_lat_dist(data, v_l_field="v_lat_car", v_r_field="v_lat_ego")
         out_signals["a_lat_l"] = data["a_lat_car"]
         out_signals["a_lat_r"] = data["a_lat_ego"]
         out_signals["v_mulat_l"] = data["v_lat_car"]
