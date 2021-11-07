@@ -53,7 +53,7 @@ class TrafficRuleLeftTurn(STLRule):
             `rho_dt`: reaction time in number of steps (note: we use `next` operator, we need discrete-time stl)
             `max_steps`: overestimation of the episode length, used to monitor open intervals
         """
-        required_parameters = ["a_lon_minbr", "a_lon_maxacc", "rho", "rho_dt", "max_steps"]
+        required_parameters = ["a_lon_minbr", "a_lon_maxacc", "rho", "rho_dt", "sim_dt", "max_steps"]
         assert all([p in rss_params for p in required_parameters])
         self._p = {p: rss_params[p] for p in required_parameters}
 
@@ -78,6 +78,27 @@ class TrafficRuleLeftTurn(STLRule):
         phi_lt_resp = f"always (({S} and (next (not {S}))) -> (next {P_leftturn}))"
         return phi_lt_resp
 
+    @property
+    def demo_spec(self):
+        # predicates
+        E_canbrake = "(d_lon_ej > d_lon_min_ej)"
+        C_canbrake = "(d_lon_cj > d_lon_min_cj)"
+        E_not_injunc = "(is_e_in_junc <= 0)"
+        V_lon_e_stop = "(v_lon_e <= 0)"
+        C_react_or_crossed = f"({C_canbrake} or (d_lon_cj<0))"  # the check on d_lon_cj in case d has pos-neg interpret.
+        A_lon_e_maxacc = f"(a_lon_e <= {self._p['a_lon_maxacc']})"
+        A_lon_e_minbr = f"(a_lon_e <= -{self._p['a_lon_minbr']})"
+        release_cond = f"({V_lon_e_stop} or {C_react_or_crossed})"
+        # specification
+        # note: non-strict release operator is written using not and until
+        S = f"(({E_canbrake} and not(next({E_canbrake}))) and (not({C_canbrake})) and ({E_not_injunc}))"
+        P_react = f"(not(not({release_cond}) until[0:{self._p['rho_dt']}] not({release_cond} or {A_lon_e_maxacc})))"
+        P_brake = f"(not(not({release_cond}) until[0:{self._p['rho_dt']}] not({release_cond} or {A_lon_e_minbr})))"
+        P_leftturn = f"({P_react} and {P_brake})"
+        # resulting specification
+        phi_lt_resp = f"(next (not {S})) -> (next {P_leftturn})"
+        return phi_lt_resp
+
     def _compute_dynamic_safe_long_dist_to_junction(self, data: Dict[str, np.ndarray], v_field: str) -> np.ndarray:
         # note: the only change is the assumption that v_front = 0, because a junction is stationary
         # then, we just remove the `d_f_brake` term from the calculation
@@ -88,6 +109,27 @@ class TrafficRuleLeftTurn(STLRule):
         d_diff = d_b_prebr + d_b_brake
         d_lon_min = np.maximum(d_diff, np.zeros_like(d_diff))
         return d_lon_min
+
+    def generate_signals_for_demo(self, data: Dict[str, np.ndarray], begin:int=5, end:int=1000) -> Dict[str, List]:
+        # check input
+        obs_signals = ["elapsed_time", "v_lon_ego", "v_lon_car", "a_lon_ego", "d_ego_j", "is_e_in_j", "d_car_j"]
+        assert all([s in data for s in obs_signals]), f"missing in signals ({obs_signals} not in {data.keys()})"
+        # generate output signals from input signals
+        out_signals = {}
+        out_signals["elapsed_time"] = data["elapsed_time"] - data["elapsed_time"][0]
+        out_signals["time"] = np.floor((data["elapsed_time"] - data["elapsed_time"][0]) / self._p["sim_dt"]).astype(int)
+        out_signals["a_lon_e"] = data["a_lon_ego"]
+        out_signals["v_lon_e"] = data["v_lon_ego"]
+        out_signals["d_lon_ej"] = data["d_ego_j"]
+        out_signals["d_lon_cj"] = data["d_car_j"]
+        out_signals["is_e_in_junc"] = data["is_e_in_j"]
+        out_signals["d_lon_min_ej"] = self._compute_dynamic_safe_long_dist_to_junction(data, v_field="v_lon_ego")
+        out_signals["d_lon_min_cj"] = self._compute_dynamic_safe_long_dist_to_junction(data, v_field="v_lon_car")
+        out_signals = {k: list(v[begin:end]) for k, v in out_signals.items()}
+        # check output
+        assert all([s in out_signals for s in
+                    self.variables]), f"missing out signals ({self.variables} not in {out_signals.keys()})"
+        return out_signals
 
     def generate_signals(self, data: Dict[str, np.ndarray]) -> Dict[str, List]:
         # check input
