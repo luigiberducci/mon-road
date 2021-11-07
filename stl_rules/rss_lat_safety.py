@@ -36,7 +36,7 @@ class RSSLateralSafetyRule(STLRule):
             `max_steps`: overestimation of the episode length, used to monitor open intervals
             `mu`: used to compute the mu-lateral velocity, kind of min dist among vehicles we want to enforce (ndr)
         """
-        required_parameters = ["a_lat_maxacc", "a_lat_minbr", "rho", "rho_dt", "max_steps", "mu"]
+        required_parameters = ["a_lat_maxacc", "a_lat_minbr", "rho", "rho_dt", "sim_dt", "max_steps", "mu"]
         assert all([p in rss_params for p in required_parameters])
         self._p = {p: rss_params[p] for p in required_parameters}
 
@@ -77,6 +77,43 @@ class RSSLateralSafetyRule(STLRule):
         phi_lat_resp = f"always (({S_lat_lr} and (next (not {S_lat_lr}))) -> (next {P_lat}))"
         return phi_lat_resp
 
+    @property
+    def demo_spec(self):
+        # predicates
+        S_lat_lr = "(d_lat_lr > d_lat_min)"
+        A_lat_l_maxacc = f"(abs(a_lat_l) <= {self._p['a_lat_maxacc']})"
+        A_lat_l_minbr = f"(a_lat_l <= -{self._p['a_lat_minbr']})"
+        A_lat_r_maxacc = f"(abs(a_lat_r) <= {self._p['a_lat_maxacc']})"
+        A_lat_r_minbr = f"(a_lat_r >= -{self._p['a_lat_minbr']})"
+        V_lat_l_stop = "(v_mulat_l == 0)"
+        V_lat_l_neg = "(v_mulat_l <= 0)"
+        V_lat_r_stop = "(v_mulat_r == 0)"
+        V_lat_r_pos = "(v_mulat_r >= 0)"
+        # specification
+        # note: non-strict release operator is written using not and until
+        # P_lat_0_r = S_lat_lr R^{ns}_[0,rho] Psi_1 = S_lat_lr R^{ns}_[0,rho] (A_lat_l_maxacc and A_lat_r_maxacc)
+        psi_1 = f"({A_lat_l_maxacc} and {A_lat_r_maxacc})"
+        P_lat_0_r = f"(not( not({S_lat_lr}) until[0:{self._p['rho_dt']}] not({S_lat_lr} or {psi_1})))"
+        # P_lat1_r_inf = Psi2 and Psi3 = ((S or V_l_stop) R^{ns}_[rho,inf] A_l_minbr) and ((S or V_r_stop) R^{ns}_[rho,inf] A_r_minbr)
+        S_or_Vlstop = f"({S_lat_lr} or {V_lat_l_stop})"
+        S_or_Vrstop = f"({S_lat_lr} or {V_lat_r_stop})"
+        Until_rho_inf = f"until[{self._p['rho_dt']}:{self._p['max_steps']}]"
+        psi_2 = f"(not((not {S_or_Vlstop}) {Until_rho_inf} (not ({S_or_Vlstop} or {A_lat_l_minbr}))))"
+        psi_3 = f"(not((not {S_or_Vrstop}) {Until_rho_inf} (not ({S_or_Vrstop} or {A_lat_r_minbr}))))"
+        P_lat1_r_inf = f"({psi_2} and {psi_3})"
+        # P_lat2_r_inf = Psi_4 and Psi_5 =
+        # S R^{ns} (V_l_stop -> (next always V_l_neg)) and S R^{ns} (V_r_stop -> (next always V_r_neg))
+        psi_4_1 = f"({V_lat_l_stop} -> (next (always {V_lat_l_neg})))"
+        psi_4 = f"(not ((not {S_lat_lr}) {Until_rho_inf} (not ({S_lat_lr} or {psi_4_1}))))"
+        psi_5_1 = f"({V_lat_r_stop} -> (next (always {V_lat_r_pos})))"
+        psi_5 = f"(not ((not {S_lat_lr}) {Until_rho_inf} (not ({S_lat_lr} or {psi_5_1}))))"
+        P_lat2_r_inf = f"{psi_4} and {psi_5}"
+        # All together
+        P_lat = f"({P_lat_0_r} and {P_lat1_r_inf} and {P_lat2_r_inf})"
+        # resulting specification
+        phi_lat_resp = f"(next (not {S_lat_lr})) -> (next {P_lat})"
+        return phi_lat_resp
+
     def _compute_dynamic_safe_lat_dist(self, data: Dict[str, np.ndarray]) -> np.ndarray:
         """ Follows the Definition 3.2 in [1]"""
         v_lat_l_rho = data["v_lat_l"] + self._p["rho"] * self._p["a_lat_maxacc"]
@@ -89,6 +126,31 @@ class RSSLateralSafetyRule(STLRule):
         d_min_lat = self._p["mu"] + np.maximum(d_diff, np.zeros_like(d_diff))
         assert d_min_lat.shape == data["v_lat_l"].shape
         return d_min_lat
+
+    def generate_signals_for_demo(self, data: Dict[str, np.ndarray], begin: int = 5, end: int = 10000) -> Dict[
+        str, List]:
+        # check input
+        obs_signals = ["elapsed_time", "d_lat_egocar", "v_lat_ego", "v_lat_car", "a_lat_ego", "a_lat_car",
+                       "angle_actor"]
+        assert all([s in data for s in obs_signals]), f"missing in signals ({obs_signals} not in {data.keys()})"
+        # generate output signals from input signals
+        out_signals = {}
+        out_signals["elapsed_time"] = data["elapsed_time"] - data["elapsed_time"][0]
+        out_signals["time"] = np.floor(
+            (data["elapsed_time"] - data["elapsed_time"][0]) / self._p["sim_dt"]).astype(int)
+        out_signals["d_lat_lr"] = data["d_lat_egocar"]
+        data["v_lat_l"] = data["v_lat_car"]  # used to compute safe dist
+        data["v_lat_r"] = data["v_lat_ego"]
+        out_signals["d_lat_min"] = self._compute_dynamic_safe_lat_dist(data)
+        out_signals["a_lat_l"] = data["a_lat_car"]
+        out_signals["a_lat_r"] = data["a_lat_ego"]
+        out_signals["v_mulat_l"] = data["v_lat_car"]
+        out_signals["v_mulat_r"] = data["v_lat_ego"]
+        out_signals = {k: list(v[begin:end]) for k, v in out_signals.items()}
+        # check output
+        assert all([s in out_signals for s in
+                    self.variables]), f"missing out signals ({self.variables} not in {out_signals.keys()})"
+        return out_signals
 
     def generate_signals(self, data: Dict[str, np.ndarray]) -> Dict[str, List]:
         # check input

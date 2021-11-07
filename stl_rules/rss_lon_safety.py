@@ -72,7 +72,7 @@ class RSSLongitudinalSafetyRule(STLRule):
         P_lon_2 = f"(not(not({S_lon_bf}) until[{self._p['rho_dt']}:{self._p['max_steps']}] (not({S_lon_bf} or {psi2}))))"
         P_lon = f"({P_lon_1} and {P_lon_2})"
         # resulting specification
-        phi_lon_resp = f"((not {S_lon_bf}) -> (next {P_lon}))"
+        phi_lon_resp = f"(next(not {S_lon_bf})) -> (next {P_lon})"
         return phi_lon_resp
 
     def _compute_dynamic_safe_long_dist(self, data: Dict[str, np.ndarray]) -> np.ndarray:
@@ -109,18 +109,15 @@ class RSSLongitudinalSafetyRule(STLRule):
         assert all([s in data for s in obs_signals]), f"missing in signals ({obs_signals} not in {data.keys()})"
         # generate output signals from input signals
         out_signals = {}
-        out_signals["time"] = 1 + np.floor(
-            (data["elapsed_time"] - data["elapsed_time"][0]) / self._p["sim_dt"]).astype(int)[begin:end]
-        out_signals["a_lon_b"] = data["a_lon_ego"][begin:end]
-        out_signals["a_lon_f"] = data["a_lon_car"][begin:end]
-        out_signals["d_lon_bf"] = data["d_lon_egocar"][begin:end]
-        data["v_lon_b"] = data["v_lon_ego"][begin:end]
-        data["v_lon_f"] = data["v_lon_car"][begin:end]
-        out_signals["d_lon_min"] = self._compute_dynamic_safe_long_dist(data)[begin:end]
-        out_signals = {k: list(v) for k, v in out_signals.items()}
-        out_signals = {k: [lst[0]] + lst for k, lst in out_signals.items()}
-        out_signals["time"] = [t + 1 for t in out_signals["time"] if t > 0]
-        out_signals["d_lon_min"][0] = 0
+        out_signals["elapsed_time"] = data["elapsed_time"] - data["elapsed_time"][0]
+        out_signals["time"] = np.floor((data["elapsed_time"] - data["elapsed_time"][0]) / self._p["sim_dt"]).astype(int)
+        out_signals["a_lon_b"] = data["a_lon_ego"]
+        out_signals["a_lon_f"] = data["a_lon_car"]
+        out_signals["d_lon_bf"] = data["d_lon_egocar"]
+        data["v_lon_b"] = data["v_lon_ego"]
+        data["v_lon_f"] = data["v_lon_car"]
+        out_signals["d_lon_min"] = self._compute_dynamic_safe_long_dist(data)
+        out_signals = {k: list(v[begin:end]) for k, v in out_signals.items()}
         # check output
         assert all([s in out_signals for s in
                     self.variables]), f"missing out signals ({self.variables} not in {out_signals.keys()})"

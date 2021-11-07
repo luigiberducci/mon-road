@@ -6,9 +6,9 @@ from stl_rules.rss_lon_safety import RSSLongitudinalSafetyRule
 from stl_rules.utils import monitor_trace
 
 # load data
-with open("data/rss_params.yaml", 'r') as stream:
+with open("../data/rss_params.yaml", 'r') as stream:
     rss_params = yaml.safe_load(stream)
-trace = pd.read_csv("data/example3.csv")
+trace = pd.read_csv("../data/toy_examples/example3.csv")
 
 # create rss rule
 long_jerk = ComfortLongitudinalJerk(rss_params=rss_params)

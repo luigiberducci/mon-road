@@ -5,9 +5,9 @@ from stl_rules.tr_left_turn import TrafficRuleLeftTurn
 from stl_rules.utils import monitor_trace
 
 # load data
-with open("data/rss_params.yaml", 'r') as stream:
+with open("../data/rss_params.yaml", 'r') as stream:
     rss_params = yaml.safe_load(stream)
-trace = pd.read_csv("data/example4.csv")
+trace = pd.read_csv("../data/toy_examples/example4.csv")
 
 # create traffic-rule spec
 tr = TrafficRuleLeftTurn(rss_params=rss_params)

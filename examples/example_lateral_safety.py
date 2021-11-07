@@ -5,9 +5,9 @@ from stl_rules.rss_lat_safety import RSSLateralSafetyRule
 from stl_rules.utils import monitor_trace
 
 # load data
-with open("data/rss_params.yaml", 'r') as stream:
+with open("../data/rss_params.yaml", 'r') as stream:
     rss_params = yaml.safe_load(stream)
-trace = pd.read_csv("data/example2.csv")
+trace = pd.read_csv("../data/toy_examples/example2.csv")
 
 # create rss rule
 rss2 = RSSLateralSafetyRule(rss_params=rss_params)
