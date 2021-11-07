@@ -34,11 +34,13 @@ parser.add_argument("--rules", type=str, nargs="+", help="rules to monitor", cho
 parser.add_argument("--datadir", type=pathlib.Path, help="where csv logs are stored", required=True)
 parser.add_argument("--begin", type=int, help="index of trace begin", default=10)
 parser.add_argument("--end", type=int, help="index of trace end", default=1000)
+parser.add_argument("-no_save", action="store_true")
 args = parser.parse_args()
 
 rules = args.rules
 datadir = args.datadir
 begin, end = args.begin, args.end
+disable_save = args.no_save
 assert datadir.exists(), f"datadir {datadir} not exists"
 assert begin <= end, f"not valid trace delimiters ({begin} > {end}"
 
@@ -69,7 +71,8 @@ for rule_name in rules:
         # write results
         outpath = str(datadir / f"robustness_{filepath.stem}_{int(time.time())}.csv")
         out = pd.DataFrame({"elapsed_time": signals["elapsed_time"], "robustness": robustness})
-        out.to_csv(outpath, index=False)
+        if not disable_save:
+            out.to_csv(outpath, index=False)
         print(f"\tresults written in {outpath}")
         # collect curves for aggregated plot
         xs.append(signals['elapsed_time'])
@@ -83,7 +86,10 @@ for rule_name in rules:
     for xx, yy, label in zip(xs, ys, labels):
         plt.plot(xx, yy, label=label)
     plt.legend()
-    plt.savefig(datadir / f"plot_robustness_{rule_name}_{time.time()}.png")
+    if disable_save:
+        plt.show()
+    else:
+        plt.savefig(datadir / f"plot_robustness_{rule_name}_{time.time()}.png")
     print(f"[Result] monitoring rule in {time.time() - rule_t0:.3f} sec")
     print()
 

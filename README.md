@@ -28,7 +28,7 @@ Library for monitoring of traffic metrics using STL, developed in the context of
   - [x] Test integration with simulated data
   - [ ] Prepare fancy plot for a few episodes
   
-Timing for processing:
+Timing for offline processing of simulation data:
 
 | Rule                         | Time (sec/episode)   |
 | ---------------------------- | ------------------ |
