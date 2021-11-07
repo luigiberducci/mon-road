@@ -1,47 +1,33 @@
-import pathlib
-import time
-
 import pandas as pd
 import yaml
 
 from stl_rules.rss_lon_safety import RSSLongitudinalSafetyRule
 from stl_rules.utils import monitor_trace
 
-t0 = time.time()
-
 # load data
 with open("../data/rss_params.yaml", 'r') as stream:
     rss_params = yaml.safe_load(stream)
-# trace = pd.read_csv("data/example1.csv")
-datadir = pathlib.Path("/home/luigi/Desktop/output")
-filename = "safe1_3159_3161"
-trace = pd.read_csv(datadir / f"{filename}.csv")
-print(f"[Info] Load data in {time.time()-t0:.3f} sec")
+trace = pd.read_csv("../data/toy_examples/example1.csv")
 
 # create rss rule
-t0 = time.time()
 rss1 = RSSLongitudinalSafetyRule(rss_params=rss_params)
 
 # process data to produce monitorable signals
-signals = rss1.generate_signals_for_demo(trace)
+signals = rss1.generate_signals(trace)
 
 # compute robustness
-original_robustness = [r for t, r in monitor_trace(rss1.spec, rss1.variables, rss1.types, signals)]
-demo_robustness = [r for t, r in monitor_trace(rss1.demo_spec, rss1.variables, rss1.types, signals)]
-rhodf = pd.DataFrame({"rho_unsafe_imply_plan": demo_robustness,
-                      "rho_always_safeandnextunsafe_imply_plan": original_robustness})
-rhodf.to_csv(datadir / f"robustness_{filename}.csv")
-print(f"[Info] Produce monitoring into file in {time.time()-t0:.3f} sec")
+robustness = [r for t, r in monitor_trace(rss1.spec, rss1.variables, rss1.types, signals)]
 
 # plot
 import matplotlib.pyplot as plt
 
-plt.title(f"Monitoring RSS Long. Safety - File: {filename}")
+plt.title("Monitoring RSS Longitudinal Safety")
 plt.xlabel("time steps")
 plt.ylabel("value")
-plt.plot(signals['d_lon_bf'], label="d_lon_bf", color="blue")
-plt.plot(signals['d_lon_min'], label="d_lon}_min", color="green")
-plt.plot(demo_robustness, label="rho_our", color="red")
-plt.plot(original_robustness, label="rho_fainekos", color="orange")
+plt.plot(signals['a_lon_b'], label="a_lon_b")
+plt.plot(signals['a_lon_f'], label="a_lon_f")
+plt.plot(signals['d_lon_bf'], label="d_lon_bf")
+plt.plot(signals['d_lon_min'], label="d_lon_min")
+plt.plot(robustness, label="robustness")
 plt.legend()
-plt.savefig(datadir / f"robustness_{filename}.png")
+plt.show()
