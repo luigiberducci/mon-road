@@ -2,26 +2,31 @@
 Library for monitoring of traffic metrics using STL, developed in the context of the FFG Project ADEX.
 
 ### ADEX Demonstration Session on 10-11.11.2021, TODO List
-- [ ] RSS Longitudinal Safety
+- [x] RSS Longitudinal Safety
   - [x] Implementation of STL monitoring
   - [x] Implementation of a minimal example
-  - [ ] Test integration with simulated data
+  - [x] Test integration with simulated data
+  - [ ] Prepare fancy plot for a few episodes
 - [ ] RSS Lateral Safety
   - [x] Implementation of STL monitoring
   - [x] Implementation of a minimal example
   - [ ] Test integration with simulated data
+  - [ ] Prepare fancy plot for a few episodes
 - [ ] Traffic Rule Left-Turn Right
   - [x] Implementation of STL monitoring
   - [x] Implementation of a minimal example
   - [ ] Test integration with simulated data
+  - [ ] Prepare fancy plot for a few episodes
 - [ ] Comfort Longitudinal Jerk
   - [x] Implementation of STL monitoring
   - [x] Implementation of a minimal example
   - [ ] Test integration with simulated data
+  - [ ] Prepare fancy plot for a few episodes
 - [ ] Comfort Lateral Jerk
   - [x] Implementation of STL monitoring
   - [x] Implementation of a minimal example
   - [ ] Test integration with simulated data
+  - [ ] Prepare fancy plot for a few episodes
 
 # Installation
 Run the following command to install the dependencies 

@@ -6,8 +6,8 @@ a_lon_maxacc: 5.5   # m/s2
 a_lat_maxacc: 3.0   # m/s2
 a_lat_minbr: 3.0   # m/s2
 # comfort jerk
-j_lon_max: 0.5
-j_lat_max: 0.5
+j_lon_max: 0.9  # values from https://www.mdpi.com/2079-9292/8/9/943/htm
+j_lat_max: 0.9
 # reaction time
 rho: 0.5    # s
 sim_dt: 0.1 # s

@@ -52,19 +52,20 @@ for rule_name in rules:
     rule = stl_rules[rule_name](rss_params=rss_params)
     stl_spec = rule.spec
     #
+    rule_t0 = time.time()
     xs, ys, labels = [], [], []
     print(f"[Info] Monitoring rule {rule_name} from files in {datadir}")
     for filepath_str in glob.glob(str(datadir / f"{rule_name}*csv")):
-        t0 = time.time()
+        file_t0 = time.time()
         # read data
         filepath = pathlib.Path(filepath_str)
         trace = pd.read_csv(filepath)
         print(f"\tfile: {filepath}")
-        print(f"\tload data: {len(trace)} rows in {time.time() - t0:.3f} sec")
+        print(f"\tload data: {len(trace)} rows in {time.time() - file_t0:.3f} sec")
         # monitoring
         signals = rule.generate_signals_for_demo(trace, begin=begin, end=end)
         robustness = [r for t, r in monitor_trace(rule.demo_spec, rule.variables, rule.types, signals)]
-        print(f"\tmonitoring rule in {time.time() - t0:.3f} sec")
+        print(f"\tmonitoring trace in {time.time() - file_t0:.3f} sec")
         # write results
         outpath = str(datadir / f"robustness_{filepath.stem}_{int(time.time())}.csv")
         out = pd.DataFrame({"elapsed_time": signals["elapsed_time"], "robustness": robustness})
@@ -75,6 +76,7 @@ for rule_name in rules:
         ys.append(robustness)
         labels.append(str(filepath.stem))
     # plot
+    plt.clf()
     plt.title(rules_titles[rule_name])
     plt.xlabel("time (sec)")
     plt.ylabel("robustness")
@@ -82,5 +84,6 @@ for rule_name in rules:
         plt.plot(xx, yy, label=label)
     plt.legend()
     plt.savefig(datadir / f"plot_robustness_{rule_name}_{time.time()}.png")
+    print(f"[Result] monitoring rule in {time.time() - rule_t0:.3f} sec")
     print()
 
